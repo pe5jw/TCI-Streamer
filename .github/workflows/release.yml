@@ -1,0 +1,98 @@
+name: Release
+
+# Triggert op een versie-tag zoals v0.1.24 of v1.0.0
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-windows:
+    name: Build Windows binaries
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Setup libopus
+        shell: pwsh
+        run: ./setup-libopus-windows.ps1
+      - name: Build release
+        run: cargo build --release
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release
+          Copy-Item target/release/tci-streamer-server.exe release/
+          Copy-Item target/release/tci-streamer-client.exe release/
+          Copy-Item target/release/fake-tci-server.exe release/
+          Copy-Item target/release/tci-viewer.exe release/
+          Copy-Item target/release/tci-launcher.exe release/
+          Copy-Item README.md, LICENSE, THIRD-PARTY-LICENSES, CHANGELOG.md release/
+          Compress-Archive -Path release/* -DestinationPath "tci-streamer-${{ github.ref_name }}-windows-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: tci-streamer-*-windows-x64.zip
+
+  build-linux:
+    name: Build Linux binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: System deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopus-dev pkg-config libgl1-mesa-dev libxkbcommon-dev
+      - name: Build release
+        run: cargo build --release
+      - name: Package
+        run: |
+          mkdir -p release
+          cp target/release/tci-streamer-server release/
+          cp target/release/tci-streamer-client release/
+          cp target/release/fake-tci-server release/
+          cp target/release/tci-viewer release/
+          cp target/release/tci-launcher release/
+          cp README.md LICENSE THIRD-PARTY-LICENSES CHANGELOG.md release/
+          tar czf "tci-streamer-${{ github.ref_name }}-linux-x64.tar.gz" -C release .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: tci-streamer-*-linux-x64.tar.gz
+
+  publish:
+    name: Publish GitHub Release
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          # Extracteer de sectie tussen "## [vX.Y.Z]" en de volgende "## [..."
+          VERSION="${{ github.ref_name }}"
+          VERSION_NO_V="${VERSION#v}"
+          awk "/^## \[$VERSION_NO_V\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md > release_notes.md
+          echo "Notes voor release ${VERSION}:"
+          cat release_notes.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: tci-streamer ${{ github.ref_name }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/windows-x64/*.zip
+            artifacts/linux-x64/*.tar.gz

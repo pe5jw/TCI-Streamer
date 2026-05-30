@@ -1,0 +1,55 @@
+# Third-party licenses
+
+Dit project gebruikt de volgende open-source componenten. Alle licenties zijn
+permissief (MIT / Apache-2.0 / BSD); geen GPL/AGPL/LGPL.
+
+## Rust crate dependencies (direct)
+
+| Crate | Licentie | Gebruik |
+|-------|----------|---------|
+| tokio | MIT | async runtime |
+| tokio-tungstenite | MIT | WebSocket (boven tokio) |
+| tungstenite | MIT OR Apache-2.0 | WebSocket protocol |
+| futures-util | MIT OR Apache-2.0 | async stream utilities |
+| url | MIT OR Apache-2.0 | URL parsing |
+| clap | MIT OR Apache-2.0 | CLI argument parsing |
+| serde | MIT OR Apache-2.0 | serialisatie |
+| serde_json | MIT OR Apache-2.0 | JSON |
+| bincode | MIT | binary serialisatie |
+| anyhow | MIT OR Apache-2.0 | error handling |
+| thiserror | MIT OR Apache-2.0 | error derives |
+| tracing | MIT | structured logging |
+| tracing-subscriber | MIT | logging output |
+| bytes | MIT | byte buffers |
+| byteorder | Unlicense OR MIT | endianness conversies |
+| rustfft | MIT OR Apache-2.0 | FFT (spectrum/waterfall) |
+| opus | MIT OR Apache-2.0 | Opus codec bindings (binding-only) |
+| flacenc | Apache-2.0 | FLAC encoder (pure Rust) |
+| claxon | Apache-2.0 | FLAC decoder (pure Rust) |
+| eframe | MIT OR Apache-2.0 | GUI framework (viewer/launcher) |
+| rfd | MIT | native file dialogs (launcher) |
+
+## Native C library
+
+| Library | Licentie | Gebruik |
+|---------|----------|---------|
+| libopus (Xiph.org) | BSD-3-Clause "No Nuclear License" | Opus encode/decode (gelinkt via `opus` crate) |
+
+libopus is een audio-codec van de Xiph.Org Foundation. De "No Nuclear License"
+variant is functioneel gelijkwaardig aan BSD-3-Clause met een symbolische
+clausule. Volledig open-source en distributie-vrij.
+
+Site: https://opus-codec.org/license/
+
+## Protocol
+
+Het TCI (Transceiver Control Interface) protocol is een open specificatie
+van Expert Electronics, gepubliceerd voor third-party SDR-clients (THRA,
+N1MM, JTDX, etc.). Dit project bevat alleen een eigen implementatie van het
+protocol — geen code of specificatie-tekst is overgenomen.
+
+## Bevestiging volledige audit
+
+Alle directe dependencies zijn permissief gelicenseerd. Er is geen "viral"
+licentie aanwezig (zoals GPL/AGPL/LGPL) die het project zou besmetten. Het
+gehele project kan zonder beperking onder de MIT-licentie worden uitgegeven.

@@ -1,0 +1,51 @@
+# ── Rust build artifacts ──────────────────────────────────────────
+/target/
+**/*.rs.bk
+# Cargo.lock WORDT WEL ingecheckt — dit is een binary-crate, niet een library.
+# Reproduceerbare builds zijn belangrijker dan flexibiliteit van versies.
+
+# ── libopus vendored binaries ────────────────────────────────────
+# Worden gedownload via setup-libopus-*.sh / setup-libopus-windows.ps1
+/vendor/opus/
+/vendor/opus-build/
+/vendor/opus-*.tar.gz
+/vendor/opus-*/
+/vendor/*.dll
+/vendor/*.lib
+/vendor/*.a
+/vendor/*.dylib
+/vendor/*.so
+/.cargo/config.toml
+
+# ── Test recordings / diagnose-uitvoer ───────────────────────────
+/test/*.wav
+/test/recordings/
+/test/*.log
+# Door tci-launcher gegenereerde start-scripts (gebruikersspecifieke
+# paden en IP-adressen, niet per ongeluk committen)
+/test/start-server.cmd
+/test/start-client.cmd
+/test/start-server.sh
+/test/start-client.sh
+
+# ── IDE en editor ────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.user
+*.suo
+
+# ── C# launcher archief (niet meer onderhouden) ──────────────────
+/tci-streamer-gui/bin/
+/tci-streamer-gui/obj/
+/tci-streamer-gui/**/bin/
+/tci-streamer-gui/**/obj/
+
+# ── Algemene rommel ──────────────────────────────────────────────
+*.log
+*.bak

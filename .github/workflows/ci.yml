@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # Wekelijks om regressies in dependencies te vangen
+  schedule:
+    - cron: '0 6 * * 1'
+
+env:
+  CARGO_TERM_COLOR: always
+  # Cargo warnings als errors in CI (lokaal wel als warning houden voor dev-flow)
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # Snelle baseline: bouw zonder libopus en zonder GUI's. Vangt syntax-
+  # en type-fouten in de kern-code in <2 minuten.
+  check:
+    name: cargo check (headless)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: fmt check
+        run: cargo fmt --all -- --check
+      - name: clippy (no default features)
+        run: cargo clippy --no-default-features -- -D warnings
+      - name: build (no default features)
+        run: cargo build --no-default-features --release
+      - name: test (no default features)
+        run: cargo test --no-default-features --release
+
+  # Volledige build op Linux mét libopus en GUI's.
+  build-linux:
+    name: Full build (Linux, met libopus + GUI's)
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: System deps (libopus + eframe)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libopus-dev pkg-config \
+            libgl1-mesa-dev libxkbcommon-dev
+      - name: build (all features)
+        run: cargo build --release
+      - name: test (all features)
+        run: cargo test --release
+      - name: List produced binaries
+        run: ls -la target/release/ | grep -E '^-.*tci-|fake-' || true
+
+  # Volledige build op Windows. Gebruikt het setup-script om libopus te
+  # downloaden en compileren.
+  build-windows:
+    name: Full build (Windows, met libopus + GUI's)
+    runs-on: windows-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Setup libopus (via project script)
+        shell: pwsh
+        run: ./setup-libopus-windows.ps1
+      - name: build (all features)
+        run: cargo build --release
+      - name: List produced binaries
+        shell: pwsh
+        run: Get-ChildItem target/release -Filter "*.exe"
