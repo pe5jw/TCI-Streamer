@@ -309,12 +309,7 @@ pub fn build_tci_text(text: &str) -> Vec<u8> {
 }
 
 /// Build een Opus audio frame.
-pub fn build_opus_audio(
-    is_tx: bool,
-    sample_rate: u32,
-    channels: u8,
-    opus_bytes: &[u8],
-) -> Vec<u8> {
+pub fn build_opus_audio(is_tx: bool, sample_rate: u32, channels: u8, opus_bytes: &[u8]) -> Vec<u8> {
     let mut buf = Vec::with_capacity(1 + 8 + opus_bytes.len());
     buf.push(if is_tx {
         FrameType::OpusTxAudio as u8
@@ -332,12 +327,7 @@ pub fn build_opus_audio(
 
 /// Build een FLAC audio frame. `flac_bytes` is een compleet zelf-bevattend
 /// FLAC-stream voor deze chunk. Header layout is identiek aan Opus.
-pub fn build_flac_audio(
-    is_tx: bool,
-    sample_rate: u32,
-    channels: u8,
-    flac_bytes: &[u8],
-) -> Vec<u8> {
+pub fn build_flac_audio(is_tx: bool, sample_rate: u32, channels: u8, flac_bytes: &[u8]) -> Vec<u8> {
     let mut buf = Vec::with_capacity(1 + 8 + flac_bytes.len());
     buf.push(if is_tx {
         FrameType::FlacTxAudio as u8

@@ -139,7 +139,11 @@ impl From<CliFilterPreset> for tci_streamer::codec::filter::AudioFilterPreset {
 }
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
-enum CliIqMode { Spectrum, DecimatedIq, Disabled }
+enum CliIqMode {
+    Spectrum,
+    DecimatedIq,
+    Disabled,
+}
 impl From<CliIqMode> for IqMode {
     fn from(v: CliIqMode) -> Self {
         match v {
@@ -178,8 +182,10 @@ async fn main() -> Result<()> {
     info!("  Server: {}", args.server);
     info!("  Listen: {}", args.listen);
     info!("  IQ:     {:?}", args.iq_mode);
-    info!("  Audio:  codec={:?} {}Hz {:.1}ms {}bps {:?}",
-          args.codec, args.sample_rate, args.frame_ms, args.bitrate, args.channels);
+    info!(
+        "  Audio:  codec={:?} {}Hz {:.1}ms {}bps {:?}",
+        args.codec, args.sample_rate, args.frame_ms, args.bitrate, args.channels
+    );
 
     let (down_tx, _) = broadcast::channel::<DownEvent>(1024);
     let (up_tx, up_rx) = mpsc::channel::<UpEvent>(256);
@@ -243,7 +249,8 @@ async fn run_server_link(
         // Parse host:port uit de ws:// URL.
         let url = url::Url::parse(&args.server)
             .with_context(|| format!("Ongeldige server URL: {}", args.server))?;
-        let host = url.host_str()
+        let host = url
+            .host_str()
             .ok_or_else(|| anyhow!("Geen host in URL: {}", args.server))?;
         let port = url.port().unwrap_or(80);
         let tcp = tokio::net::TcpStream::connect((host, port))
@@ -336,8 +343,8 @@ async fn run_server_link(
         Some(AudioDecoder::new(
             audio_config.channels.count(),
             audio_config.sample_rate,
-            2,       // THRA krijgt stereo
-            48_000,  // THRA verwacht 48kHz
+            2,      // THRA krijgt stereo
+            48_000, // THRA verwacht 48kHz
         )?)
     } else {
         None
@@ -391,12 +398,7 @@ async fn run_server_link(
     // MTU-probleem opgelost is directe doorgifte schoon.)
     macro_rules! route_rx_audio {
         ($pcm:expr, $sample_rate:expr) => {{
-            let bin = build_tci_binary(
-                TciStreamKind::RxAudio,
-                0,
-                $sample_rate,
-                &$pcm,
-            );
+            let bin = build_tci_binary(TciStreamKind::RxAudio, 0, $sample_rate, &$pcm);
             let _ = down_tx.send(DownEvent::Binary(Arc::new(bin)));
         }};
     }

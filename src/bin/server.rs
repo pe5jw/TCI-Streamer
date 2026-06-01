@@ -105,9 +105,11 @@ impl From<CliIqSwap> for tci_streamer::codec::iq::IqSwap {
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env()
-            .add_directive("tci_streamer=info".parse()?)
-            .add_directive("tci_streamer_server=info".parse()?))
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive("tci_streamer=info".parse()?)
+                .add_directive("tci_streamer_server=info".parse()?),
+        )
         .init();
 
     let args = Args::parse();
@@ -115,7 +117,8 @@ async fn main() -> Result<()> {
     info!("  Upstream: {}", args.upstream);
     info!("  Listen:   {}", args.listen);
 
-    let listener = TcpListener::bind(args.listen).await
+    let listener = TcpListener::bind(args.listen)
+        .await
         .with_context(|| format!("Kon niet luisteren op {}", args.listen))?;
 
     loop {
@@ -136,7 +139,8 @@ async fn main() -> Result<()> {
 }
 
 async fn handle_client(stream: tokio::net::TcpStream, args: Args) -> Result<()> {
-    let ws = tokio_tungstenite::accept_async(stream).await
+    let ws = tokio_tungstenite::accept_async(stream)
+        .await
         .context("WebSocket handshake failed")?;
     let (mut client_tx, mut client_rx) = ws.split();
 
@@ -169,7 +173,8 @@ async fn handle_client(stream: tokio::net::TcpStream, args: Args) -> Result<()> 
     client_tx.send(Message::Binary(ack)).await?;
 
     // Connect upstream
-    let (upstream_ws, _) = connect_async(&args.upstream).await
+    let (upstream_ws, _) = connect_async(&args.upstream)
+        .await
         .with_context(|| format!("Kon niet verbinden met upstream {}", args.upstream))?;
     let (upstream_tx, mut upstream_rx) = upstream_ws.split();
     info!("Upstream verbonden");
@@ -214,16 +219,8 @@ async fn handle_client(stream: tokio::net::TcpStream, args: Args) -> Result<()> 
 
     // Audio bandpass filters (server-side). Cutoffs komen uit Hello
     // (client beslist) zodat server en client dezelfde filter-config hebben.
-    let mut rx_filter = BandpassFilter::new(
-        48_000,
-        hello.rx_hp_hz as f32,
-        hello.rx_lp_hz as f32,
-    );
-    let mut tx_filter = BandpassFilter::new(
-        48_000,
-        hello.tx_hp_hz as f32,
-        hello.tx_lp_hz as f32,
-    );
+    let mut rx_filter = BandpassFilter::new(48_000, hello.rx_hp_hz as f32, hello.rx_lp_hz as f32);
+    let mut tx_filter = BandpassFilter::new(48_000, hello.tx_hp_hz as f32, hello.tx_lp_hz as f32);
     if rx_filter.is_active() {
         info!(
             "Server RX filter actief: hp={:.0} Hz, lp={:.0} Hz",
@@ -641,13 +638,12 @@ async fn handle_client(stream: tokio::net::TcpStream, args: Args) -> Result<()> 
 }
 
 fn parse_kv_u32(text: &str, key: &str) -> Option<u32> {
-    text.split(';')
-        .find_map(|p| {
-            let p = p.trim();
-            p.strip_prefix(key)
-                .and_then(|v| v.split(',').next())
-                .and_then(|v| v.parse().ok())
-        })
+    text.split(';').find_map(|p| {
+        let p = p.trim();
+        p.strip_prefix(key)
+            .and_then(|v| v.split(',').next())
+            .and_then(|v| v.parse().ok())
+    })
 }
 
 fn parse_vfo(text: &str) -> Option<u32> {
@@ -688,7 +684,10 @@ fn log_binary_frame_header(data: &[u8], frame_idx: u32) {
         .join(" ");
     info!(
         "FRAME #{} totale lengte={} bytes, eerste {} bytes (per u32 LE):\n  {}",
-        frame_idx, data.len(), n, hex
+        frame_idx,
+        data.len(),
+        n,
+        hex
     );
     if data.len() >= 32 {
         let receiver = LittleEndian::read_u32(&data[0..4]);

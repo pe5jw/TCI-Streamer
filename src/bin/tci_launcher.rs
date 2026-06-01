@@ -130,7 +130,11 @@ impl LauncherApp {
         self.proc = Some(child);
         self.status = format!(
             "{} draait.",
-            if self.settings.role == BridgeRole::Server { "Server" } else { "Client" }
+            if self.settings.role == BridgeRole::Server {
+                "Server"
+            } else {
+                "Client"
+            }
         );
     }
 
@@ -164,11 +168,17 @@ impl LauncherApp {
             .add_filter("Linux shell (.sh)", &["sh"])
             .set_file_name(&format!("{}.{}", default_name, default_ext))
             .save_file();
-        let Some(mut path) = dlg else { return; };
+        let Some(mut path) = dlg else {
+            return;
+        };
 
         // Bepaal het formaat aan de extensie. Als de gebruiker geen extensie
         // typte, vallen we terug op .cmd op Windows en .sh elders.
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
+        let ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
         let (body, ext_used) = match ext.as_str() {
             "sh" => (build_sh_script(&self.settings), "sh"),
             "cmd" | "bat" => (build_cmd_script(&self.settings), "cmd"),
@@ -216,7 +226,9 @@ impl LauncherApp {
         let dlg = rfd::FileDialog::new()
             .set_title("Kies map voor start-scripts (.cmd + .sh)")
             .pick_folder();
-        let Some(dir) = dlg else { return; };
+        let Some(dir) = dlg else {
+            return;
+        };
         let cmd_path = dir.join(format!("{}.cmd", basename));
         let sh_path = dir.join(format!("{}.sh", basename));
         let mut ok = 0;
@@ -256,7 +268,9 @@ impl LauncherApp {
             .add_filter("Start-scripts", &["cmd", "sh", "bat"])
             .add_filter("Alle bestanden", &["*"])
             .pick_file();
-        let Some(path) = dlg else { return; };
+        let Some(path) = dlg else {
+            return;
+        };
         let content = match std::fs::read_to_string(&path) {
             Ok(c) => c,
             Err(e) => {
@@ -306,7 +320,9 @@ fn push_log(log: &Arc<Mutex<Vec<String>>>, line: &str) {
 
 fn chrono_like_stamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
     let total_secs = now.as_secs();
     let h = ((total_secs / 3600) % 24) as u32;
     let m = ((total_secs / 60) % 60) as u32;
@@ -327,18 +343,39 @@ impl eframe::App for LauncherApp {
         egui::TopBottomPanel::top("mode").show(ctx, |ui| {
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(
-                    concat!("tci-streamer launcher v", env!("CARGO_PKG_VERSION"))
-                ).strong().color(Color32::from_rgb(160, 200, 255)));
+                ui.label(
+                    egui::RichText::new(concat!(
+                        "tci-streamer launcher v",
+                        env!("CARGO_PKG_VERSION")
+                    ))
+                    .strong()
+                    .color(Color32::from_rgb(160, 200, 255)),
+                );
                 ui.separator();
                 ui.label("Modus:");
-                if ui.add_enabled(!running, egui::RadioButton::new(
-                    self.settings.role == BridgeRole::Client, "Client (bedien-PC)")).clicked() {
+                if ui
+                    .add_enabled(
+                        !running,
+                        egui::RadioButton::new(
+                            self.settings.role == BridgeRole::Client,
+                            "Client (bedien-PC)",
+                        ),
+                    )
+                    .clicked()
+                {
                     self.settings.role = BridgeRole::Client;
                     changed = true;
                 }
-                if ui.add_enabled(!running, egui::RadioButton::new(
-                    self.settings.role == BridgeRole::Server, "Server (radio-PC)")).clicked() {
+                if ui
+                    .add_enabled(
+                        !running,
+                        egui::RadioButton::new(
+                            self.settings.role == BridgeRole::Server,
+                            "Server (radio-PC)",
+                        ),
+                    )
+                    .clicked()
+                {
                     self.settings.role = BridgeRole::Server;
                     changed = true;
                 }
@@ -348,7 +385,11 @@ impl eframe::App for LauncherApp {
 
         egui::TopBottomPanel::bottom("status").show(ctx, |ui| {
             ui.add_space(2.0);
-            ui.label(egui::RichText::new(&self.status).color(Color32::from_gray(170)).small());
+            ui.label(
+                egui::RichText::new(&self.status)
+                    .color(Color32::from_gray(170))
+                    .small(),
+            );
             ui.add_space(2.0);
         });
 
@@ -495,68 +536,86 @@ fn server_panel(ui: &mut egui::Ui, s: &mut BridgeSettings) -> bool {
 fn client_panel(ui: &mut egui::Ui, s: &mut BridgeSettings) -> bool {
     let mut changed = false;
     ui.group(|ui| {
-        ui.label(egui::RichText::new("Verbinding").strong()
-            .color(Color32::from_rgb(160, 200, 255)));
-        egui::Grid::new("client_conn").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
-            ui.label("Server URL:");
-            changed |= ui.text_edit_singleline(&mut s.server).changed();
-            ui.end_row();
-            ui.label("Lokaal luister-adres:");
-            changed |= ui.text_edit_singleline(&mut s.client_listen).changed();
-            ui.end_row();
-        });
+        ui.label(
+            egui::RichText::new("Verbinding")
+                .strong()
+                .color(Color32::from_rgb(160, 200, 255)),
+        );
+        egui::Grid::new("client_conn")
+            .num_columns(2)
+            .spacing([12.0, 8.0])
+            .show(ui, |ui| {
+                ui.label("Server URL:");
+                changed |= ui.text_edit_singleline(&mut s.server).changed();
+                ui.end_row();
+                ui.label("Lokaal luister-adres:");
+                changed |= ui.text_edit_singleline(&mut s.client_listen).changed();
+                ui.end_row();
+            });
     });
 
     ui.add_space(8.0);
     ui.group(|ui| {
-        ui.label(egui::RichText::new("Audio codec").strong()
-            .color(Color32::from_rgb(160, 200, 255)));
+        ui.label(
+            egui::RichText::new("Audio codec")
+                .strong()
+                .color(Color32::from_rgb(160, 200, 255)),
+        );
         let opus = matches!(s.codec, Codec::Opus);
         let opus_or_flac = matches!(s.codec, Codec::Opus | Codec::Flac);
-        egui::Grid::new("audio_grid").num_columns(4).spacing([12.0, 8.0]).show(ui, |ui| {
-            ui.label("Codec:");
-            changed |= codec_combo(ui, &mut s.codec);
-            ui.label("Kanalen:");
-            ui.add_enabled_ui(opus_or_flac, |ui| {
-                changed |= channels_combo(ui, &mut s.channels);
-            });
-            ui.end_row();
+        egui::Grid::new("audio_grid")
+            .num_columns(4)
+            .spacing([12.0, 8.0])
+            .show(ui, |ui| {
+                ui.label("Codec:");
+                changed |= codec_combo(ui, &mut s.codec);
+                ui.label("Kanalen:");
+                ui.add_enabled_ui(opus_or_flac, |ui| {
+                    changed |= channels_combo(ui, &mut s.channels);
+                });
+                ui.end_row();
 
-            ui.label("Sample rate:");
-            ui.add_enabled_ui(opus, |ui| {
-                changed |= sample_rate_combo(ui, &mut s.sample_rate);
-            });
-            ui.label("Frame (ms):");
-            ui.add_enabled_ui(opus, |ui| {
-                changed |= frame_ms_combo(ui, &mut s.frame_ms);
-            });
-            ui.end_row();
+                ui.label("Sample rate:");
+                ui.add_enabled_ui(opus, |ui| {
+                    changed |= sample_rate_combo(ui, &mut s.sample_rate);
+                });
+                ui.label("Frame (ms):");
+                ui.add_enabled_ui(opus, |ui| {
+                    changed |= frame_ms_combo(ui, &mut s.frame_ms);
+                });
+                ui.end_row();
 
-            ui.label("Bitrate:");
-            ui.add_enabled_ui(opus, |ui| {
-                changed |= bitrate_combo(ui, &mut s.bitrate);
-            });
-            ui.label("");
-            ui.label("");
-            ui.end_row();
+                ui.label("Bitrate:");
+                ui.add_enabled_ui(opus, |ui| {
+                    changed |= bitrate_combo(ui, &mut s.bitrate);
+                });
+                ui.label("");
+                ui.label("");
+                ui.end_row();
 
-            ui.label("RX filter:");
-            changed |= filter_combo(ui, &mut s.rx_filter, "rx_filter");
-            ui.label("TX filter:");
-            changed |= filter_combo(ui, &mut s.tx_filter, "tx_filter");
-            ui.end_row();
-        });
+                ui.label("RX filter:");
+                changed |= filter_combo(ui, &mut s.rx_filter, "rx_filter");
+                ui.label("TX filter:");
+                changed |= filter_combo(ui, &mut s.tx_filter, "tx_filter");
+                ui.end_row();
+            });
     });
 
     ui.add_space(8.0);
     ui.group(|ui| {
-        ui.label(egui::RichText::new("IQ / spectrum").strong()
-            .color(Color32::from_rgb(160, 200, 255)));
-        egui::Grid::new("iq_grid").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
-            ui.label("IQ mode:");
-            changed |= iq_mode_combo(ui, &mut s.iq_mode);
-            ui.end_row();
-        });
+        ui.label(
+            egui::RichText::new("IQ / spectrum")
+                .strong()
+                .color(Color32::from_rgb(160, 200, 255)),
+        );
+        egui::Grid::new("iq_grid")
+            .num_columns(2)
+            .spacing([12.0, 8.0])
+            .show(ui, |ui| {
+                ui.label("IQ mode:");
+                changed |= iq_mode_combo(ui, &mut s.iq_mode);
+                ui.end_row();
+            });
     });
     changed
 }
@@ -565,7 +624,8 @@ fn client_panel(ui: &mut egui::Ui, s: &mut BridgeSettings) -> bool {
 
 fn iq_mode_combo(ui: &mut egui::Ui, v: &mut IqMode) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("iq_mode").selected_text(iq_mode_arg(*v))
+    egui::ComboBox::from_id_salt("iq_mode")
+        .selected_text(iq_mode_arg(*v))
         .show_ui(ui, |ui| {
             for m in [IqMode::Spectrum, IqMode::DecimatedIq, IqMode::Disabled] {
                 changed |= ui.selectable_value(v, m, iq_mode_arg(m)).changed();
@@ -576,7 +636,8 @@ fn iq_mode_combo(ui: &mut egui::Ui, v: &mut IqMode) -> bool {
 
 fn iq_swap_combo(ui: &mut egui::Ui, v: &mut IqSwap) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("iq_swap").selected_text(iq_swap_arg(*v))
+    egui::ComboBox::from_id_salt("iq_swap")
+        .selected_text(iq_swap_arg(*v))
         .show_ui(ui, |ui| {
             for m in [IqSwap::None, IqSwap::Swap, IqSwap::Conj] {
                 changed |= ui.selectable_value(v, m, iq_swap_arg(m)).changed();
@@ -587,9 +648,15 @@ fn iq_swap_combo(ui: &mut egui::Ui, v: &mut IqSwap) -> bool {
 
 fn codec_combo(ui: &mut egui::Ui, v: &mut Codec) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("codec").selected_text(codec_arg(*v))
+    egui::ComboBox::from_id_salt("codec")
+        .selected_text(codec_arg(*v))
         .show_ui(ui, |ui| {
-            for m in [Codec::Opus, Codec::Flac, Codec::Lossless, Codec::LosslessInt16] {
+            for m in [
+                Codec::Opus,
+                Codec::Flac,
+                Codec::Lossless,
+                Codec::LosslessInt16,
+            ] {
                 changed |= ui.selectable_value(v, m, codec_arg(m)).changed();
             }
         });
@@ -598,7 +665,8 @@ fn codec_combo(ui: &mut egui::Ui, v: &mut Codec) -> bool {
 
 fn channels_combo(ui: &mut egui::Ui, v: &mut Channels) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("channels").selected_text(channels_arg(*v))
+    egui::ComboBox::from_id_salt("channels")
+        .selected_text(channels_arg(*v))
         .show_ui(ui, |ui| {
             for m in [Channels::Mono, Channels::Stereo] {
                 changed |= ui.selectable_value(v, m, channels_arg(m)).changed();
@@ -609,10 +677,16 @@ fn channels_combo(ui: &mut egui::Ui, v: &mut Channels) -> bool {
 
 fn filter_combo(ui: &mut egui::Ui, v: &mut FilterPreset, id: &str) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt(id).selected_text(filter_arg(*v))
+    egui::ComboBox::from_id_salt(id)
+        .selected_text(filter_arg(*v))
         .show_ui(ui, |ui| {
-            for m in [FilterPreset::Off, FilterPreset::Wide, FilterPreset::Voice,
-                      FilterPreset::Ssb, FilterPreset::Narrow] {
+            for m in [
+                FilterPreset::Off,
+                FilterPreset::Wide,
+                FilterPreset::Voice,
+                FilterPreset::Ssb,
+                FilterPreset::Narrow,
+            ] {
                 changed |= ui.selectable_value(v, m, filter_arg(m)).changed();
             }
         });
@@ -621,7 +695,8 @@ fn filter_combo(ui: &mut egui::Ui, v: &mut FilterPreset, id: &str) -> bool {
 
 fn sample_rate_combo(ui: &mut egui::Ui, v: &mut u32) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("sample_rate").selected_text(v.to_string())
+    egui::ComboBox::from_id_salt("sample_rate")
+        .selected_text(v.to_string())
         .show_ui(ui, |ui| {
             for &r in &[8000u32, 12000, 16000, 24000, 48000] {
                 changed |= ui.selectable_value(v, r, r.to_string()).changed();
@@ -637,7 +712,8 @@ fn frame_ms_combo(ui: &mut egui::Ui, v: &mut f32) -> bool {
     } else {
         format!("{}", v)
     };
-    egui::ComboBox::from_id_salt("frame_ms").selected_text(label)
+    egui::ComboBox::from_id_salt("frame_ms")
+        .selected_text(label)
         .show_ui(ui, |ui| {
             for &r in &[2.5f32, 5.0, 10.0, 20.0, 40.0, 60.0] {
                 let label = if (r - r.floor()).abs() < 0.001 {
@@ -653,7 +729,8 @@ fn frame_ms_combo(ui: &mut egui::Ui, v: &mut f32) -> bool {
 
 fn bitrate_combo(ui: &mut egui::Ui, v: &mut u32) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt("bitrate").selected_text(v.to_string())
+    egui::ComboBox::from_id_salt("bitrate")
+        .selected_text(v.to_string())
         .show_ui(ui, |ui| {
             for &r in &[16000u32, 24000, 32000, 48000, 64000, 96000] {
                 changed |= ui.selectable_value(v, r, r.to_string()).changed();
@@ -669,13 +746,17 @@ fn main() -> Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([760.0, 820.0])
             .with_min_inner_size([560.0, 600.0])
-            .with_title(concat!("tci-streamer launcher v", env!("CARGO_PKG_VERSION"))),
+            .with_title(concat!(
+                "tci-streamer launcher v",
+                env!("CARGO_PKG_VERSION")
+            )),
         ..Default::default()
     };
     eframe::run_native(
         "tci-streamer-launcher",
         native,
         Box::new(|_cc| Ok(Box::new(LauncherApp::new()))),
-    ).map_err(|e| anyhow::anyhow!("eframe fout: {e}"))?;
+    )
+    .map_err(|e| anyhow::anyhow!("eframe fout: {e}"))?;
     Ok(())
 }

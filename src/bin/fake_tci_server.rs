@@ -91,15 +91,20 @@ fn build_tci_binary(stream_type: u32, sample_rate: u32, samples: &[f32]) -> Vec<
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
     let args = Args::parse();
     info!("fake-tci-server v{} gestart", env!("CARGO_PKG_VERSION"));
     info!("  Listen:    {}", args.listen);
-    info!("  Audio:     {} Hz toon, {} Hz rate, block {}", args.tone, args.audio_rate, args.audio_block);
-    info!("  IQ:        {} Hz rate, block {}", args.iq_rate, args.iq_block);
+    info!(
+        "  Audio:     {} Hz toon, {} Hz rate, block {}",
+        args.tone, args.audio_rate, args.audio_block
+    );
+    info!(
+        "  IQ:        {} Hz rate, block {}",
+        args.iq_rate, args.iq_block
+    );
 
     let listener = TcpListener::bind(args.listen)
         .await
@@ -154,12 +159,9 @@ async fn handle(stream: tokio::net::TcpStream, args: Args) -> Result<()> {
     let mut noise_state: u32 = 12345;
 
     // Timers
-    let audio_period = Duration::from_micros(
-        (args.audio_block as u64 * 1_000_000) / args.audio_rate as u64,
-    );
-    let iq_period = Duration::from_micros(
-        (args.iq_block as u64 * 1_000_000) / args.iq_rate as u64,
-    );
+    let audio_period =
+        Duration::from_micros((args.audio_block as u64 * 1_000_000) / args.audio_rate as u64);
+    let iq_period = Duration::from_micros((args.iq_block as u64 * 1_000_000) / args.iq_rate as u64);
     let mut audio_timer = tokio::time::interval(audio_period);
     let mut iq_timer = tokio::time::interval(iq_period.max(Duration::from_millis(5)));
 

@@ -69,31 +69,28 @@ impl AudioEncoder {
     /// `samples` is interleaved op `input_rate` × `input_channels`.
     pub fn push(&mut self, samples: &[f32]) -> Result<Vec<Vec<u8>>> {
         // Stap 1: converteer kanaal-count indien nodig (stereo→mono mix).
-        let after_channels: std::borrow::Cow<'_, [f32]> = if self.input_channels == 2
-            && self.config.channels == AudioChannels::Mono
-        {
-            // L+R gemiddelde
-            let n = samples.len() / 2;
-            let mut mono = Vec::with_capacity(n);
-            for i in 0..n {
-                let l = samples[i * 2];
-                let r = samples[i * 2 + 1];
-                mono.push((l + r) * 0.5);
-            }
-            std::borrow::Cow::Owned(mono)
-        } else if self.input_channels == 1
-            && self.config.channels == AudioChannels::Stereo
-        {
-            // Mono → stereo dup
-            let mut st = Vec::with_capacity(samples.len() * 2);
-            for &s in samples {
-                st.push(s);
-                st.push(s);
-            }
-            std::borrow::Cow::Owned(st)
-        } else {
-            std::borrow::Cow::Borrowed(samples)
-        };
+        let after_channels: std::borrow::Cow<'_, [f32]> =
+            if self.input_channels == 2 && self.config.channels == AudioChannels::Mono {
+                // L+R gemiddelde
+                let n = samples.len() / 2;
+                let mut mono = Vec::with_capacity(n);
+                for i in 0..n {
+                    let l = samples[i * 2];
+                    let r = samples[i * 2 + 1];
+                    mono.push((l + r) * 0.5);
+                }
+                std::borrow::Cow::Owned(mono)
+            } else if self.input_channels == 1 && self.config.channels == AudioChannels::Stereo {
+                // Mono → stereo dup
+                let mut st = Vec::with_capacity(samples.len() * 2);
+                for &s in samples {
+                    st.push(s);
+                    st.push(s);
+                }
+                std::borrow::Cow::Owned(st)
+            } else {
+                std::borrow::Cow::Borrowed(samples)
+            };
 
         // Stap 2: resample naar codec sample_rate als nodig.
         if self.input_rate != self.config.sample_rate {

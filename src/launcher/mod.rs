@@ -5,22 +5,47 @@
 use std::fmt::Write;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BridgeRole { Server, Client }
+pub enum BridgeRole {
+    Server,
+    Client,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IqMode { Spectrum, DecimatedIq, Disabled }
+pub enum IqMode {
+    Spectrum,
+    DecimatedIq,
+    Disabled,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IqSwap { None, Swap, Conj }
+pub enum IqSwap {
+    None,
+    Swap,
+    Conj,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Codec { Opus, Flac, Lossless, LosslessInt16 }
+pub enum Codec {
+    Opus,
+    Flac,
+    Lossless,
+    LosslessInt16,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Channels { Mono, Stereo }
+pub enum Channels {
+    Mono,
+    Stereo,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FilterPreset { Off, Wide, Voice, Ssb, Narrow }
+pub enum FilterPreset {
+    Off,
+    Wide,
+    Voice,
+    Ssb,
+    Narrow,
+}
 
 /// Alle instellingen voor één bridge-instance (server of client).
 #[derive(Debug, Clone)]
@@ -132,10 +157,18 @@ pub fn filter_arg(f: FilterPreset) -> &'static str {
 pub fn exe_name(role: BridgeRole) -> &'static str {
     match role {
         BridgeRole::Server => {
-            if cfg!(windows) { "tci-streamer-server.exe" } else { "tci-streamer-server" }
+            if cfg!(windows) {
+                "tci-streamer-server.exe"
+            } else {
+                "tci-streamer-server"
+            }
         }
         BridgeRole::Client => {
-            if cfg!(windows) { "tci-streamer-client.exe" } else { "tci-streamer-client" }
+            if cfg!(windows) {
+                "tci-streamer-client.exe"
+            } else {
+                "tci-streamer-client"
+            }
         }
     }
 }
@@ -152,27 +185,50 @@ fn fmt_frame_ms(v: f32) -> String {
 pub fn build_args(s: &BridgeSettings) -> Vec<String> {
     let mut a = Vec::new();
     if s.role == BridgeRole::Server {
-        a.push("--upstream".into()); a.push(s.upstream.clone());
-        a.push("--listen".into());   a.push(s.server_listen.clone());
-        a.push("--iq-target-rate".into()); a.push(s.iq_target_rate.to_string());
-        a.push("--fft-size".into());       a.push(s.fft_size.to_string());
-        a.push("--iq-swap".into());        a.push(iq_swap_arg(s.iq_swap).into());
-        if s.passthrough { a.push("--passthrough".into()); }
-        if s.log_tci_commands { a.push("--log-tci-commands".into()); }
-        if s.auto_start { a.push("--auto-start".into()); }
+        a.push("--upstream".into());
+        a.push(s.upstream.clone());
+        a.push("--listen".into());
+        a.push(s.server_listen.clone());
+        a.push("--iq-target-rate".into());
+        a.push(s.iq_target_rate.to_string());
+        a.push("--fft-size".into());
+        a.push(s.fft_size.to_string());
+        a.push("--iq-swap".into());
+        a.push(iq_swap_arg(s.iq_swap).into());
+        if s.passthrough {
+            a.push("--passthrough".into());
+        }
+        if s.log_tci_commands {
+            a.push("--log-tci-commands".into());
+        }
+        if s.auto_start {
+            a.push("--auto-start".into());
+        }
     } else {
-        a.push("--server".into()); a.push(s.server.clone());
-        a.push("--listen".into()); a.push(s.client_listen.clone());
-        a.push("--iq-mode".into()); a.push(iq_mode_arg(s.iq_mode).into());
-        a.push("--codec".into());   a.push(codec_arg(s.codec).into());
-        a.push("--sample-rate".into()); a.push(s.sample_rate.to_string());
-        a.push("--frame-ms".into());    a.push(fmt_frame_ms(s.frame_ms));
-        a.push("--bitrate".into());     a.push(s.bitrate.to_string());
-        a.push("--channels".into());    a.push(channels_arg(s.channels).into());
-        a.push("--spectrum-bins".into()); a.push(s.spectrum_bins.to_string());
-        a.push("--spectrum-fps".into());  a.push(s.spectrum_fps.to_string());
-        a.push("--rx-filter".into()); a.push(filter_arg(s.rx_filter).into());
-        a.push("--tx-filter".into()); a.push(filter_arg(s.tx_filter).into());
+        a.push("--server".into());
+        a.push(s.server.clone());
+        a.push("--listen".into());
+        a.push(s.client_listen.clone());
+        a.push("--iq-mode".into());
+        a.push(iq_mode_arg(s.iq_mode).into());
+        a.push("--codec".into());
+        a.push(codec_arg(s.codec).into());
+        a.push("--sample-rate".into());
+        a.push(s.sample_rate.to_string());
+        a.push("--frame-ms".into());
+        a.push(fmt_frame_ms(s.frame_ms));
+        a.push("--bitrate".into());
+        a.push(s.bitrate.to_string());
+        a.push("--channels".into());
+        a.push(channels_arg(s.channels).into());
+        a.push("--spectrum-bins".into());
+        a.push(s.spectrum_bins.to_string());
+        a.push("--spectrum-fps".into());
+        a.push(s.spectrum_fps.to_string());
+        a.push("--rx-filter".into());
+        a.push(filter_arg(s.rx_filter).into());
+        a.push("--tx-filter".into());
+        a.push(filter_arg(s.tx_filter).into());
     }
     a
 }
@@ -192,7 +248,9 @@ pub fn build_command_line(s: &BridgeSettings, include_exe: bool) -> String {
         out.push_str(exe_name(s.role));
     }
     for arg in build_args(s) {
-        if !out.is_empty() { out.push(' '); }
+        if !out.is_empty() {
+            out.push(' ');
+        }
         let _ = write!(out, "{}", quote_if_needed(&arg));
     }
     out
@@ -253,9 +311,16 @@ pub fn parse_script(content: &str) -> Result<BridgeSettings, String> {
     let mut cmdline: Option<String> = None;
     for raw in joined.lines() {
         let line = raw.trim();
-        if line.is_empty() { continue; }
-        if line.starts_with('#') || line.starts_with("REM ") || line.starts_with("rem ")
-           || line == "REM" || line == "rem" || line.starts_with("::") {
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with('#')
+            || line.starts_with("REM ")
+            || line.starts_with("rem ")
+            || line == "REM"
+            || line == "rem"
+            || line.starts_with("::")
+        {
             continue;
         }
         // set NAME=VALUE   (Windows)
@@ -279,11 +344,13 @@ pub fn parse_script(content: &str) -> Result<BridgeSettings, String> {
         }
         // Skip overige boilerplate
         if line.starts_with("@echo")
-           || line.starts_with("cd ") || line.starts_with("cd/")
-           || line.starts_with("pause")
-           || line.starts_with("set -")
-           || line.starts_with("#!")
-           || line.starts_with("export ") {
+            || line.starts_with("cd ")
+            || line.starts_with("cd/")
+            || line.starts_with("pause")
+            || line.starts_with("set -")
+            || line.starts_with("#!")
+            || line.starts_with("export ")
+        {
             continue;
         }
         // Aanroep-regel: bevat de naam van de binary.
@@ -353,9 +420,9 @@ fn expand_vars(s: &str, vars: &std::collections::HashMap<String, String>) -> Str
                 }
             } else {
                 let mut j = i + 1;
-                while j < bytes.len()
-                    && (bytes[j].is_ascii_alphanumeric() || bytes[j] == b'_')
-                { j += 1; }
+                while j < bytes.len() && (bytes[j].is_ascii_alphanumeric() || bytes[j] == b'_') {
+                    j += 1;
+                }
                 if j > i + 1 {
                     let name = &s[i + 1..j];
                     if let Some(v) = vars.get(name) {
@@ -397,11 +464,23 @@ fn parse_command_line(line: &str) -> Result<BridgeSettings, String> {
         let val = tokens.get(i + 1).map(|s| s.as_str());
         let took_val = match key {
             // Booleans (geen waarde)
-            "--passthrough" => { s.passthrough = true; false }
-            "--log-tci-commands" => { s.log_tci_commands = true; false }
-            "--auto-start" => { s.auto_start = true; false }
+            "--passthrough" => {
+                s.passthrough = true;
+                false
+            }
+            "--log-tci-commands" => {
+                s.log_tci_commands = true;
+                false
+            }
+            "--auto-start" => {
+                s.auto_start = true;
+                false
+            }
             // Server
-            "--upstream" => { s.upstream = req(val, key)?.to_string(); true }
+            "--upstream" => {
+                s.upstream = req(val, key)?.to_string();
+                true
+            }
             "--listen" => {
                 let v = req(val, key)?.to_string();
                 // --listen wordt door zowel server als client gebruikt.
@@ -411,25 +490,66 @@ fn parse_command_line(line: &str) -> Result<BridgeSettings, String> {
                 }
                 true
             }
-            "--iq-target-rate" => { s.iq_target_rate = req_parse(val, key)?; true }
-            "--fft-size" => { s.fft_size = req_parse(val, key)?; true }
-            "--iq-swap" => { s.iq_swap = parse_iq_swap(req(val, key)?)?; true }
-            // Client
-            "--server" => { s.server = req(val, key)?.to_string(); true }
-            "--iq-mode" => { s.iq_mode = parse_iq_mode(req(val, key)?)?; true }
-            "--codec" => { s.codec = parse_codec(req(val, key)?)?; true }
-            "--sample-rate" => { s.sample_rate = req_parse(val, key)?; true }
-            "--frame-ms" => {
-                let v = req(val, key)?;
-                s.frame_ms = v.parse().map_err(|_| format!("Ongeldige frame-ms: {}", v))?;
+            "--iq-target-rate" => {
+                s.iq_target_rate = req_parse(val, key)?;
                 true
             }
-            "--bitrate" => { s.bitrate = req_parse(val, key)?; true }
-            "--channels" => { s.channels = parse_channels(req(val, key)?)?; true }
-            "--spectrum-bins" => { s.spectrum_bins = req_parse(val, key)?; true }
-            "--spectrum-fps" => { s.spectrum_fps = req_parse(val, key)?; true }
-            "--rx-filter" => { s.rx_filter = parse_filter(req(val, key)?)?; true }
-            "--tx-filter" => { s.tx_filter = parse_filter(req(val, key)?)?; true }
+            "--fft-size" => {
+                s.fft_size = req_parse(val, key)?;
+                true
+            }
+            "--iq-swap" => {
+                s.iq_swap = parse_iq_swap(req(val, key)?)?;
+                true
+            }
+            // Client
+            "--server" => {
+                s.server = req(val, key)?.to_string();
+                true
+            }
+            "--iq-mode" => {
+                s.iq_mode = parse_iq_mode(req(val, key)?)?;
+                true
+            }
+            "--codec" => {
+                s.codec = parse_codec(req(val, key)?)?;
+                true
+            }
+            "--sample-rate" => {
+                s.sample_rate = req_parse(val, key)?;
+                true
+            }
+            "--frame-ms" => {
+                let v = req(val, key)?;
+                s.frame_ms = v
+                    .parse()
+                    .map_err(|_| format!("Ongeldige frame-ms: {}", v))?;
+                true
+            }
+            "--bitrate" => {
+                s.bitrate = req_parse(val, key)?;
+                true
+            }
+            "--channels" => {
+                s.channels = parse_channels(req(val, key)?)?;
+                true
+            }
+            "--spectrum-bins" => {
+                s.spectrum_bins = req_parse(val, key)?;
+                true
+            }
+            "--spectrum-fps" => {
+                s.spectrum_fps = req_parse(val, key)?;
+                true
+            }
+            "--rx-filter" => {
+                s.rx_filter = parse_filter(req(val, key)?)?;
+                true
+            }
+            "--tx-filter" => {
+                s.tx_filter = parse_filter(req(val, key)?)?;
+                true
+            }
             // Onbekend: skip stilletjes (forwards-compatible)
             _ if key.starts_with("--") => {
                 // Onbekende optie met waarde — probeer er één over te slaan.
@@ -450,30 +570,50 @@ fn req<'a>(v: Option<&'a str>, key: &str) -> Result<&'a str, String> {
 }
 fn req_parse<T: std::str::FromStr>(v: Option<&str>, key: &str) -> Result<T, String> {
     let v = req(v, key)?;
-    v.parse::<T>().map_err(|_| format!("Ongeldige waarde voor {}: {}", key, v))
+    v.parse::<T>()
+        .map_err(|_| format!("Ongeldige waarde voor {}: {}", key, v))
 }
 fn parse_iq_swap(v: &str) -> Result<IqSwap, String> {
-    match v { "none" => Ok(IqSwap::None), "swap" => Ok(IqSwap::Swap), "conj" => Ok(IqSwap::Conj),
-              _ => Err(format!("Onbekende iq-swap: {}", v)) }
+    match v {
+        "none" => Ok(IqSwap::None),
+        "swap" => Ok(IqSwap::Swap),
+        "conj" => Ok(IqSwap::Conj),
+        _ => Err(format!("Onbekende iq-swap: {}", v)),
+    }
 }
 fn parse_iq_mode(v: &str) -> Result<IqMode, String> {
-    match v { "spectrum" => Ok(IqMode::Spectrum), "decimated-iq" => Ok(IqMode::DecimatedIq),
-              "disabled" => Ok(IqMode::Disabled), _ => Err(format!("Onbekende iq-mode: {}", v)) }
+    match v {
+        "spectrum" => Ok(IqMode::Spectrum),
+        "decimated-iq" => Ok(IqMode::DecimatedIq),
+        "disabled" => Ok(IqMode::Disabled),
+        _ => Err(format!("Onbekende iq-mode: {}", v)),
+    }
 }
 fn parse_codec(v: &str) -> Result<Codec, String> {
-    match v { "opus" => Ok(Codec::Opus), "flac" => Ok(Codec::Flac),
-              "lossless" => Ok(Codec::Lossless), "lossless-int16" => Ok(Codec::LosslessInt16),
-              _ => Err(format!("Onbekende codec: {}", v)) }
+    match v {
+        "opus" => Ok(Codec::Opus),
+        "flac" => Ok(Codec::Flac),
+        "lossless" => Ok(Codec::Lossless),
+        "lossless-int16" => Ok(Codec::LosslessInt16),
+        _ => Err(format!("Onbekende codec: {}", v)),
+    }
 }
 fn parse_channels(v: &str) -> Result<Channels, String> {
-    match v { "mono" => Ok(Channels::Mono), "stereo" => Ok(Channels::Stereo),
-              _ => Err(format!("Onbekende channels: {}", v)) }
+    match v {
+        "mono" => Ok(Channels::Mono),
+        "stereo" => Ok(Channels::Stereo),
+        _ => Err(format!("Onbekende channels: {}", v)),
+    }
 }
 fn parse_filter(v: &str) -> Result<FilterPreset, String> {
-    match v { "off" => Ok(FilterPreset::Off), "wide" => Ok(FilterPreset::Wide),
-              "voice" => Ok(FilterPreset::Voice), "ssb" => Ok(FilterPreset::Ssb),
-              "narrow" => Ok(FilterPreset::Narrow),
-              _ => Err(format!("Onbekend filter: {}", v)) }
+    match v {
+        "off" => Ok(FilterPreset::Off),
+        "wide" => Ok(FilterPreset::Wide),
+        "voice" => Ok(FilterPreset::Voice),
+        "ssb" => Ok(FilterPreset::Ssb),
+        "narrow" => Ok(FilterPreset::Narrow),
+        _ => Err(format!("Onbekend filter: {}", v)),
+    }
 }
 
 /// Eenvoudige shell-style tokenizer met quoted strings.
@@ -483,22 +623,32 @@ fn tokenize(line: &str) -> Vec<String> {
     let mut in_quote: Option<char> = None;
     for c in line.chars() {
         match (in_quote, c) {
-            (Some(q), c) if c == q => { in_quote = None; }
+            (Some(q), c) if c == q => {
+                in_quote = None;
+            }
             (Some(_), c) => cur.push(c),
-            (None, '"') | (None, '\'') => { in_quote = Some(c); }
+            (None, '"') | (None, '\'') => {
+                in_quote = Some(c);
+            }
             (None, c) if c.is_whitespace() => {
-                if !cur.is_empty() { out.push(std::mem::take(&mut cur)); }
+                if !cur.is_empty() {
+                    out.push(std::mem::take(&mut cur));
+                }
             }
             (None, c) => cur.push(c),
         }
     }
-    if !cur.is_empty() { out.push(cur); }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
     out
 }
 
 /// Case-insensitive prefix strip (voor "SET ", "Set ", "set ").
 fn strip_prefix_ci<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
-    if s.len() < prefix.len() { return None; }
+    if s.len() < prefix.len() {
+        return None;
+    }
     if s[..prefix.len()].eq_ignore_ascii_case(prefix) {
         Some(&s[prefix.len()..])
     } else {

@@ -92,14 +92,18 @@ impl ViewerState {
 }
 
 fn classify(data: &[u8]) -> Option<(u32, u32)> {
-    if data.len() < TCI_HDR { return None; }
+    if data.len() < TCI_HDR {
+        return None;
+    }
     let sample_rate = LittleEndian::read_u32(&data[4..8]);
     let stream_type = LittleEndian::read_u32(&data[24..28]);
     Some((stream_type, sample_rate))
 }
 
 fn read_f32(data: &[u8]) -> Vec<f32> {
-    if data.len() <= TCI_HDR { return Vec::new(); }
+    if data.len() <= TCI_HDR {
+        return Vec::new();
+    }
     let n = (data.len() - TCI_HDR) / 4;
     let mut out = Vec::with_capacity(n);
     for i in 0..n {
@@ -110,13 +114,15 @@ fn read_f32(data: &[u8]) -> Vec<f32> {
 }
 
 fn hann(n: usize) -> Vec<f32> {
-    (0..n).map(|k| {
-        0.5 * (1.0 - (2.0 * std::f32::consts::PI * k as f32 / (n - 1) as f32).cos())
-    }).collect()
+    (0..n)
+        .map(|k| 0.5 * (1.0 - (2.0 * std::f32::consts::PI * k as f32 / (n - 1) as f32).cos()))
+        .collect()
 }
 
 fn iq_fft_db(iq: &[f32], fft: &dyn rustfft::Fft<f32>, n: usize, win: &[f32]) -> Vec<f32> {
-    if iq.len() < n * 2 { return Vec::new(); }
+    if iq.len() < n * 2 {
+        return Vec::new();
+    }
     let mut buf: Vec<Complex32> = Vec::with_capacity(n);
     for k in 0..n {
         let i = iq[k * 2] * win[k];
@@ -134,8 +140,15 @@ fn iq_fft_db(iq: &[f32], fft: &dyn rustfft::Fft<f32>, n: usize, win: &[f32]) -> 
     out
 }
 
-fn audio_fft_db(audio: &[f32], fft: &dyn rustfft::Fft<f32>, n: usize, win: &[f32]) -> (Vec<f32>, f32, f32) {
-    if audio.len() < n * 2 { return (Vec::new(), -120.0, 0.0); }
+fn audio_fft_db(
+    audio: &[f32],
+    fft: &dyn rustfft::Fft<f32>,
+    n: usize,
+    win: &[f32],
+) -> (Vec<f32>, f32, f32) {
+    if audio.len() < n * 2 {
+        return (Vec::new(), -120.0, 0.0);
+    }
     let mut buf: Vec<Complex32> = Vec::with_capacity(n);
     let mut sum_sq = 0.0f64;
     let mut peak = 0.0f32;
@@ -210,9 +223,13 @@ async fn run_network(args: Args, state: Arc<Mutex<ViewerState>>, ctx: egui::Cont
     while let Some(msg) = rx.next().await {
         match msg? {
             Message::Binary(data) => {
-                let Some((stype, rate)) = classify(&data) else { continue };
+                let Some((stype, rate)) = classify(&data) else {
+                    continue;
+                };
                 let samples = read_f32(&data);
-                if samples.is_empty() { continue; }
+                if samples.is_empty() {
+                    continue;
+                }
                 match stype {
                     0 => {
                         iq_accum.extend_from_slice(&samples);
@@ -287,8 +304,10 @@ impl ViewerApp {
         Self {
             state,
             waterfall_tex: None,
-            waterfall_w: w, waterfall_h: h,
-            db_min: -100.0, db_max: -20.0,
+            waterfall_w: w,
+            waterfall_h: h,
+            db_min: -100.0,
+            db_max: -20.0,
         }
     }
 
@@ -302,9 +321,13 @@ impl ViewerApp {
     }
 
     fn update_waterfall_texture(&mut self) {
-        let Some(tex) = self.waterfall_tex.as_mut() else { return };
+        let Some(tex) = self.waterfall_tex.as_mut() else {
+            return;
+        };
         let mut s = self.state.lock().unwrap();
-        if !s.waterfall_dirty || s.waterfall.is_empty() { return; }
+        if !s.waterfall_dirty || s.waterfall.is_empty() {
+            return;
+        }
         let pixels = vec![Color32::BLACK; self.waterfall_w * self.waterfall_h];
         let mut img = ColorImage::new([self.waterfall_w, self.waterfall_h], pixels);
         let db_min = self.db_min;
@@ -312,7 +335,9 @@ impl ViewerApp {
         let w = self.waterfall_w;
         let h = self.waterfall_h;
         for (row_idx, row) in s.waterfall.iter().enumerate().take(h) {
-            if row.is_empty() { continue; }
+            if row.is_empty() {
+                continue;
+            }
             for x in 0..w {
                 let src = (x * row.len() / w).min(row.len() - 1);
                 let v = row[src];
@@ -333,18 +358,32 @@ fn colormap(t: f32) -> Color32 {
         (lerp(0.0, 0.0, u), lerp(0.0, 0.0, u), lerp(40.0, 120.0, u))
     } else if t < 0.5 {
         let u = (t - 0.25) / 0.25;
-        (lerp(0.0, 0.0, u), lerp(0.0, 180.0, u), lerp(120.0, 180.0, u))
+        (
+            lerp(0.0, 0.0, u),
+            lerp(0.0, 180.0, u),
+            lerp(120.0, 180.0, u),
+        )
     } else if t < 0.75 {
         let u = (t - 0.5) / 0.25;
-        (lerp(0.0, 200.0, u), lerp(180.0, 220.0, u), lerp(180.0, 0.0, u))
+        (
+            lerp(0.0, 200.0, u),
+            lerp(180.0, 220.0, u),
+            lerp(180.0, 0.0, u),
+        )
     } else {
         let u = (t - 0.75) / 0.25;
-        (lerp(200.0, 255.0, u), lerp(220.0, 255.0, u), lerp(0.0, 200.0, u))
+        (
+            lerp(200.0, 255.0, u),
+            lerp(220.0, 255.0, u),
+            lerp(0.0, 200.0, u),
+        )
     };
     Color32::from_rgb(r as u8, g as u8, b as u8)
 }
 
-fn lerp(a: f32, b: f32, t: f32) -> f32 { a + (b - a) * t }
+fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    a + (b - a) * t
+}
 
 impl eframe::App for ViewerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -353,15 +392,26 @@ impl eframe::App for ViewerApp {
 
         let (status, iq_spec, iq_rate, audio_spec, audio_rate, audio_rms_db, audio_peak, iqf, af) = {
             let s = self.state.lock().unwrap();
-            (s.status.clone(), s.iq_spectrum.clone(), s.iq_rate,
-             s.audio_spectrum.clone(), s.audio_rate, s.audio_rms_db, s.audio_peak,
-             s.iq_frames, s.audio_frames)
+            (
+                s.status.clone(),
+                s.iq_spectrum.clone(),
+                s.iq_rate,
+                s.audio_spectrum.clone(),
+                s.audio_rate,
+                s.audio_rms_db,
+                s.audio_peak,
+                s.iq_frames,
+                s.audio_frames,
+            )
         };
 
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
-                ui.label(egui::RichText::new(concat!("tci-viewer v", env!("CARGO_PKG_VERSION")))
-                    .strong().color(egui::Color32::from_rgb(160, 200, 255)));
+                ui.label(
+                    egui::RichText::new(concat!("tci-viewer v", env!("CARGO_PKG_VERSION")))
+                        .strong()
+                        .color(egui::Color32::from_rgb(160, 200, 255)),
+                );
                 ui.separator();
                 ui.label(&status);
                 ui.separator();
@@ -394,7 +444,9 @@ impl eframe::App for ViewerApp {
             ui.add_space(8.0);
 
             ui.allocate_ui(egui::vec2(total.x, half), |ui| {
-                ui.label(egui::RichText::new(format!("Audio-spectrum ({} Hz)", audio_rate)).strong());
+                ui.label(
+                    egui::RichText::new(format!("Audio-spectrum ({} Hz)", audio_rate)).strong(),
+                );
                 draw_spectrum(ui, &audio_spec, half * 0.7, self.db_min, self.db_max);
 
                 ui.horizontal(|ui| {
@@ -402,13 +454,19 @@ impl eframe::App for ViewerApp {
                     ui.label(format!("piek {:5.2}", audio_peak));
                     let frac = ((audio_rms_db + 60.0) / 60.0).clamp(0.0, 1.0);
                     let bar = ui.available_width().min(400.0);
-                    let (rect, _) = ui.allocate_exact_size(egui::vec2(bar, 18.0), egui::Sense::hover());
+                    let (rect, _) =
+                        ui.allocate_exact_size(egui::vec2(bar, 18.0), egui::Sense::hover());
                     let p = ui.painter();
                     p.rect_filled(rect, 2.0, Color32::from_gray(40));
-                    let mut fill = rect; fill.set_width(rect.width() * frac);
-                    let color = if audio_rms_db > -6.0 { Color32::from_rgb(220, 80, 60) }
-                                else if audio_rms_db > -20.0 { Color32::from_rgb(220, 200, 60) }
-                                else { Color32::from_rgb(80, 200, 100) };
+                    let mut fill = rect;
+                    fill.set_width(rect.width() * frac);
+                    let color = if audio_rms_db > -6.0 {
+                        Color32::from_rgb(220, 80, 60)
+                    } else if audio_rms_db > -20.0 {
+                        Color32::from_rgb(220, 200, 60)
+                    } else {
+                        Color32::from_rgb(80, 200, 100)
+                    };
                     p.rect_filled(fill, 2.0, color);
                 });
             });
@@ -421,7 +479,9 @@ fn draw_spectrum(ui: &mut egui::Ui, spec: &[f32], height: f32, db_min: f32, db_m
     let (rect, _) = ui.allocate_exact_size(egui::vec2(w, height), egui::Sense::hover());
     let p = ui.painter_at(rect);
     p.rect_filled(rect, 0.0, Color32::from_gray(20));
-    if spec.is_empty() { return; }
+    if spec.is_empty() {
+        return;
+    }
 
     // dB gridlijnen
     let mut db = (db_max / 10.0).floor() * 10.0;
@@ -437,20 +497,28 @@ fn draw_spectrum(ui: &mut egui::Ui, spec: &[f32], height: f32, db_min: f32, db_m
     // Spectrum-lijn
     let n = spec.len();
     let cols = rect.width() as usize;
-    if cols < 2 { return; }
+    if cols < 2 {
+        return;
+    }
     let mut pts = Vec::with_capacity(cols);
     for x in 0..cols {
         let from = (x * n / cols).min(n.saturating_sub(1));
         let to = ((x + 1) * n / cols).max(from + 1).min(n);
         let mut v = -200.0f32;
-        for &s in &spec[from..to] { if s > v { v = s; } }
+        for &s in &spec[from..to] {
+            if s > v {
+                v = s;
+            }
+        }
         let t = ((v - db_min) / (db_max - db_min)).clamp(0.0, 1.0);
         let y = rect.bottom() - t * rect.height();
         pts.push(egui::pos2(rect.left() + x as f32, y));
     }
     for i in 0..pts.len().saturating_sub(1) {
-        p.line_segment([pts[i], pts[i + 1]],
-                       egui::Stroke::new(1.5, Color32::from_rgb(240, 200, 80)));
+        p.line_segment(
+            [pts[i], pts[i + 1]],
+            egui::Stroke::new(1.5, Color32::from_rgb(240, 200, 80)),
+        );
     }
 }
 
@@ -463,12 +531,18 @@ fn main() -> Result<()> {
     let (ctx_tx, ctx_rx) = std::sync::mpsc::channel::<egui::Context>();
 
     std::thread::spawn(move || {
-        let ctx = match ctx_rx.recv() { Ok(c) => c, Err(_) => return };
+        let ctx = match ctx_rx.recv() {
+            Ok(c) => c,
+            Err(_) => return,
+        };
         let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all().build().expect("tokio runtime");
+            .enable_all()
+            .build()
+            .expect("tokio runtime");
         rt.block_on(async {
             loop {
-                if let Err(e) = run_network(net_args.clone(), net_state.clone(), ctx.clone()).await {
+                if let Err(e) = run_network(net_args.clone(), net_state.clone(), ctx.clone()).await
+                {
                     net_state.lock().unwrap().status = format!("Fout: {:#}. Reconnect over 3s…", e);
                     ctx.request_repaint();
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
@@ -494,6 +568,7 @@ fn main() -> Result<()> {
             let _ = ctx_tx.send(cc.egui_ctx.clone());
             Ok(Box::new(ViewerApp::new(state, &app_args)))
         }),
-    ).map_err(|e| anyhow::anyhow!("eframe fout: {e}"))?;
+    )
+    .map_err(|e| anyhow::anyhow!("eframe fout: {e}"))?;
     Ok(())
 }

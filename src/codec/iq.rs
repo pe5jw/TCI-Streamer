@@ -95,7 +95,8 @@ impl SpectrumProcessor {
                 for (i, c) in self.accum.iter().enumerate() {
                     let p = (c.norm_sqr() / self.fft_size as f32).max(1e-20);
                     let db = 10.0 * p.log10();
-                    self.avg_power[i] = self.avg_power[i] * (1.0 - self.avg_alpha) + db * self.avg_alpha;
+                    self.avg_power[i] =
+                        self.avg_power[i] * (1.0 - self.avg_alpha) + db * self.avg_alpha;
                 }
                 self.accum.clear();
             }
@@ -238,7 +239,10 @@ pub fn synth_iq_from_spectrum(
     out_samples: usize,
 ) -> Vec<f32> {
     use rustfft::FftPlanner;
-    let n = bins_u8.len().next_power_of_two().max(out_samples.next_power_of_two());
+    let n = bins_u8
+        .len()
+        .next_power_of_two()
+        .max(out_samples.next_power_of_two());
     // i32 arithmetic om i8 overflow te voorkomen (db_max - db_min kan 128 zijn)
     let range = (db_max as i32 - db_min as i32) as f32;
 
