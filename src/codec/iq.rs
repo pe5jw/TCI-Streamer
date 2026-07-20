@@ -252,7 +252,7 @@ pub fn synth_iq_from_spectrum(
         let db = db_min as f32 + (b as f32 / 255.0) * range;
         let amplitude = 10f32.powf(db / 20.0);
         // Pseudo-random fase op basis van bin-index voor reproduceerbaarheid
-        let phase = (i as f32 * 2.39996323) % (2.0 * std::f32::consts::PI);
+        let phase = (i as f32 * 2.399_963_1) % (2.0 * std::f32::consts::PI);
         // FFT shift terug: bin 0 in middle → bin 0 in array start
         let target_idx = (i + n / 2) % n;
         spectrum[target_idx] = Complex32::from_polar(amplitude, phase);

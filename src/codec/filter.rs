@@ -76,7 +76,7 @@ impl Biquad {
     /// RBJ butterworth-Q biquad cookbook: 2-poles high-pass.
     /// fc = cutoff Hz, fs = sample rate Hz.
     fn set_highpass(&mut self, fc: f32, fs: f32) {
-        let q = 0.7071; // Butterworth Q
+        let q = std::f32::consts::FRAC_1_SQRT_2; // Butterworth Q
         let w0 = 2.0 * PI * fc / fs;
         let cos_w = w0.cos();
         let sin_w = w0.sin();
@@ -96,7 +96,7 @@ impl Biquad {
 
     /// RBJ butterworth-Q biquad cookbook: 2-poles low-pass.
     fn set_lowpass(&mut self, fc: f32, fs: f32) {
-        let q = 0.7071;
+        let q = std::f32::consts::FRAC_1_SQRT_2;
         let w0 = 2.0 * PI * fc / fs;
         let cos_w = w0.cos();
         let sin_w = w0.sin();
@@ -285,7 +285,7 @@ mod tests {
     fn hp_removes_dc() {
         let mut f = BandpassFilter::new(48000, 100.0, 0.0);
         // DC signaal (constante waarde) moet weg na een paar samples
-        let mut s = vec![1.0_f32; 48000];
+        let s = vec![1.0_f32; 48000];
         // Stereo-ify
         let mut stereo: Vec<f32> = s.iter().flat_map(|&v| [v, v]).collect();
         f.process_stereo(&mut stereo);

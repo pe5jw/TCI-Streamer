@@ -56,7 +56,7 @@ struct Args {
     ///   - none: geen wijziging
     ///   - swap: verwissel I en Q (spiegelt spectrum)
     ///   - conj: keer Q-teken om (spiegelt rond DC)
-    /// Probeer 'swap' als de waterfall gespiegeld is; 'conj' als alternatief.
+    ///     Probeer 'swap' als de waterfall gespiegeld is; 'conj' als alternatief.
     #[arg(long, value_enum, default_value = "none")]
     iq_swap: CliIqSwap,
 
