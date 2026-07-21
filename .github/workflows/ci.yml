@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, vibe/fix-clippy-49c615 ]
   pull_request:
     branches: [ main ]
   # Wekelijks om regressies in dependencies te vangen
